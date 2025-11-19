@@ -14,13 +14,15 @@ import com.example.myapplication.data.UserEntity
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserScreen() {
-    val viewModel: UserViewModel = viewModel()
-    var users by remember { mutableStateOf<List<UserEntity>>(emptyList()) }
 
-    // Quando a tela for aberta, busca usuários da API e depois do banco local
+    val viewModel: UserViewModel = viewModel()
+
+    // Observa o StateFlow do ViewModel
+    val users by viewModel.users.collectAsState()
+
+    // Quando a tela abrir, sincroniza API -> BD -> UI
     LaunchedEffect(Unit) {
-        viewModel.syncUsersFromApi() // baixa da API e salva no Room
-        users = viewModel.getLocalUsers() // recupera do banco local
+        viewModel.refreshUsers()
     }
 
     Scaffold(
@@ -34,6 +36,7 @@ fun UserScreen() {
                 .padding(padding)
                 .padding(16.dp)
         ) {
+
             if (users.isEmpty()) {
                 CircularProgressIndicator(modifier = Modifier.padding(16.dp))
             } else {
@@ -56,4 +59,5 @@ fun UserScreen() {
         }
     }
 }
+
 
