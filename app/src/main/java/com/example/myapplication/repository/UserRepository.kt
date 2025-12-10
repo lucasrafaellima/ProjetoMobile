@@ -1,27 +1,30 @@
 package com.example.myapplication.repository
 
-import com.example.myapplication.api.RetrofitInstance
 import com.example.myapplication.data.UserDao
-import com.example.myapplication.data.UserEntity
+import com.example.myapplication.model.User
 
 class UserRepository(private val userDao: UserDao) {
 
-    private val api = RetrofitInstance.api
+    private var loggedUser: User? = null
 
-    suspend fun fetchAndSaveUsers() {
-        val usersFromApi = api.getUsers() // ✅ Agora reconhece getUsers()
-
-        // ✅ converte os dados da API em entidades do Room
-        val userEntities = usersFromApi.map { user ->
-            UserEntity(
-                name = user.name,
-                email = user.email
-            )
-        }
-
-        userDao.insertAll(userEntities)
+    suspend fun registerUser(name: String, email: String, password: String) {
+        val user = User(name = name, email = email, password = password)
+        userDao.insert(user)
     }
 
-    suspend fun getAllUsers() = userDao.getAll()
+    suspend fun login(email: String, password: String): Boolean {
+        val user = userDao.login(email, password)
+        return if (user != null) {
+            loggedUser = user
+            true
+        } else {
+            false
+        }
+    }
+
+    fun getLoggedUser(): User? = loggedUser
+
+    suspend fun getAllUsers(): List<User> = userDao.getAll()
 }
+
 

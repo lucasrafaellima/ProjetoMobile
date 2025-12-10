@@ -2,14 +2,21 @@ package com.example.myapplication.data
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.example.myapplication.model.User
 
 @Dao
 interface UserDao {
 
-    @Query("SELECT * FROM users") // 👈 Deve bater com o nome da tabela no Entity
-    suspend fun getAll(): List<UserEntity>
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insert(user: User)
 
-    @Insert
-    suspend fun insertAll(users: List<UserEntity>)
+    @Query("SELECT * FROM users WHERE email = :email AND password = :password LIMIT 1")
+    suspend fun login(email: String, password: String): User?
+
+    @Query("SELECT * FROM users")
+    suspend fun getAll(): List<User>
 }
+
+

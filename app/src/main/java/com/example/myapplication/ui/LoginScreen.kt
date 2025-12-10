@@ -7,14 +7,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.viewmodel.UserViewModel
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onCreateAccount: () -> Unit
+    onCreateAccount: () -> Unit,
+    userViewModel: UserViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
+
+    var mensagemErro by remember { mutableStateOf<String?>(null) }
+    var carregando by remember { mutableStateOf(false) }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
@@ -49,16 +55,38 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { onLoginSuccess() },
+                enabled = !carregando,
+                onClick = {
+                    if (email.isBlank() || senha.isBlank()) {
+                        mensagemErro = "Preencha todos os campos."
+                        return@Button
+                    }
+
+                    carregando = true
+
+                    userViewModel.login(email, senha) { sucesso ->
+                        carregando = false
+                        if (sucesso) {
+                            onLoginSuccess()
+                        } else {
+                            mensagemErro = "Email ou senha incorretos!"
+                        }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Entrar")
+                Text(if (carregando) "Entrando..." else "Entrar")
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
             TextButton(onClick = { onCreateAccount() }) {
                 Text("Criar conta")
+            }
+
+            mensagemErro?.let {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = it, color = MaterialTheme.colorScheme.error)
             }
         }
     }

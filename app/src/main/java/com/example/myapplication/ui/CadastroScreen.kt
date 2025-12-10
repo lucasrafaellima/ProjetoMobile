@@ -7,12 +7,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.viewmodel.UserViewModel
 
 @Composable
-fun CadastroScreen(onCadastroConcluido: () -> Unit) {
+fun CadastroScreen(
+    onCadastroConcluido: () -> Unit,
+    userViewModel: UserViewModel = viewModel()
+) {
     var nome by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
+
+    var erro by remember { mutableStateOf("") }
+    var carregando by remember { mutableStateOf(false) }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
@@ -32,7 +40,6 @@ fun CadastroScreen(onCadastroConcluido: () -> Unit) {
                 label = { Text("Nome") },
                 modifier = Modifier.fillMaxWidth()
             )
-
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
@@ -41,7 +48,6 @@ fun CadastroScreen(onCadastroConcluido: () -> Unit) {
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth()
             )
-
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
@@ -54,12 +60,40 @@ fun CadastroScreen(onCadastroConcluido: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            if (erro.isNotEmpty()) {
+                Text(
+                    text = erro,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
             Button(
-                onClick = { onCadastroConcluido() },
-                modifier = Modifier.fillMaxWidth()
+                onClick = {
+                    carregando = true
+                    erro = ""
+
+                    // Chama o cadastro
+                    userViewModel.register(nome, email, senha) { sucesso, mensagem ->
+                        carregando = false
+                        if (sucesso) {
+                            onCadastroConcluido()
+                        } else {
+                            erro = mensagem
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !carregando
             ) {
                 Text("Cadastrar")
+            }
+
+            if (carregando) {
+                Spacer(modifier = Modifier.height(12.dp))
+                CircularProgressIndicator()
             }
         }
     }
 }
+
